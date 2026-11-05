@@ -1,4 +1,4 @@
-const API_PREFIX = '/api';
+const API_PREFIX = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '') || '/api';
 
 function createUserHeaders(userId) {
   const owner = userId?.trim();
@@ -10,19 +10,27 @@ function createUserHeaders(userId) {
   return { 'X-User-Id': owner };
 }
 
+async function readJsonPayload(response) {
+  return response.json().catch(() => null);
+}
+
+function getErrorMessage(payload, fallback) {
+  return payload?.error?.message || fallback;
+}
+
 async function readJsonResponse(response) {
-  const payload = await response.json().catch(() => null);
+  const payload = await readJsonPayload(response);
 
   if (!response.ok) {
-    throw new Error(payload?.error?.message || 'Não foi possível concluir a solicitação.');
+    throw new Error(getErrorMessage(payload, 'Não foi possível concluir a solicitação.'));
   }
 
   return payload;
 }
 
 async function throwResponseError(response) {
-  const payload = await response.json().catch(() => null);
-  throw new Error(payload?.error?.message || 'Não foi possível baixar o documento.');
+  const payload = await readJsonPayload(response);
+  throw new Error(getErrorMessage(payload, 'Não foi possível baixar o documento.'));
 }
 
 export async function uploadDocument(file, userId) {

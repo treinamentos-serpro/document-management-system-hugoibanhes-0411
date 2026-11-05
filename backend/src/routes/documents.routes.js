@@ -23,10 +23,30 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: fileSizeLimit, files: 1 },
+  limits: { fileSize: fileSizeLimit, files: 1, fields: 0, parts: 2 },
 });
 
-router.post('/upload', documentsController.requireUserId, upload.single('file'), documentsController.upload);
+function parseUpload(req, res, next) {
+  upload.single('file')(req, res, (error) => {
+    if (!error) {
+      return next();
+    }
+
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return next(error);
+    }
+
+    if (error instanceof multer.MulterError || !error.code) {
+      error.status = 400;
+      error.code = 'VALIDATION_ERROR';
+      error.message = 'A requisição de upload não é válida.';
+    }
+
+    return next(error);
+  });
+}
+
+router.post('/upload', documentsController.requireUserId, parseUpload, documentsController.upload);
 router.get('/documents', documentsController.requireUserId, documentsController.list);
 router.get('/documents/:id/download', documentsController.requireUserId, documentsController.download);
 

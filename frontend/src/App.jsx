@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { listDocuments, uploadDocument } from './services/documents.api.js';
 import UploadComponent from './components/UploadComponent.jsx';
 import DocumentList from './components/DocumentList.jsx';
@@ -21,10 +21,12 @@ export default function App() {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const listRequestSequence = useRef(0);
 
   useEffect(() => {
     const owner = userId.trim();
     const controller = new AbortController();
+    const requestSequence = ++listRequestSequence.current;
 
     try {
       localStorage.setItem('dms.userId', owner);
@@ -41,17 +43,22 @@ export default function App() {
 
     setIsLoading(true);
     setError('');
+    setDocuments([]);
 
     listDocuments(owner, { signal: controller.signal })
-      .then(setDocuments)
+      .then((loadedDocuments) => {
+        if (requestSequence === listRequestSequence.current) {
+          setDocuments(loadedDocuments);
+        }
+      })
       .catch((requestError) => {
-        if (!controller.signal.aborted) {
+        if (!controller.signal.aborted && requestSequence === listRequestSequence.current) {
           setDocuments([]);
           setError(requestError.message);
         }
       })
       .finally(() => {
-        if (!controller.signal.aborted) {
+        if (!controller.signal.aborted && requestSequence === listRequestSequence.current) {
           setIsLoading(false);
         }
       });
@@ -73,7 +80,12 @@ export default function App() {
 
     try {
       const uploadedDocument = await uploadDocument(file, owner);
-      setDocuments((currentDocuments) => [uploadedDocument, ...currentDocuments]);
+      listRequestSequence.current += 1;
+      setIsLoading(false);
+      setDocuments((currentDocuments) => [
+        uploadedDocument,
+        ...currentDocuments.filter((document) => document.id !== uploadedDocument.id),
+      ]);
       setNotice('Documento enviado.');
       return true;
     } catch (uploadError) {
@@ -108,7 +120,11 @@ export default function App() {
             value={userId}
             disabled={isUploading}
             onChange={(event) => {
+              listRequestSequence.current += 1;
               setUserId(event.target.value);
+              setDocuments([]);
+              setIsLoading(true);
+              setError('');
               setNotice('');
             }}
           />

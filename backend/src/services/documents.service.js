@@ -12,29 +12,29 @@ function toPublicDocument({ storageName, ...document }) {
   return document;
 }
 
-async function uploadDocument(file, owner) {
-  if (!file) {
+async function uploadDocument(uploadedFile, owner) {
+  if (!uploadedFile) {
     throw createServiceError(400, 'VALIDATION_ERROR', 'Envie um arquivo para continuar.');
   }
 
-  if (file.size === 0) {
-    await documentsRepository.removeFile(file.filename);
+  if (uploadedFile.size === 0) {
+    await documentsRepository.removeFile(uploadedFile.storageName);
     throw createServiceError(400, 'VALIDATION_ERROR', 'O arquivo não pode estar vazio.');
   }
 
   const document = {
     id: randomUUID(),
-    originalName: file.originalname,
-    size: file.size,
+    originalName: uploadedFile.originalName,
+    size: uploadedFile.size,
     uploadedAt: new Date().toISOString(),
     owner,
-    storageName: file.filename,
+    storageName: uploadedFile.storageName,
   };
 
   try {
     documentsRepository.create(document);
   } catch (error) {
-    await documentsRepository.removeFile(file.filename).catch(() => {});
+    await documentsRepository.removeFile(uploadedFile.storageName).catch(() => {});
     throw error;
   }
 

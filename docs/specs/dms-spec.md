@@ -55,7 +55,7 @@ Como autenticação está fora do escopo, o MVP identifica o usuário pelo cabe�
 | RNF-07 | Erros de entrada, escrita e leitura devem ser tratados nos limites do sistema; respostas não devem expor stack traces, caminhos absolutos ou nomes internos de armazenamento. |
 | RNF-08 | O nome original deve ser tratado como dado não confiável, preservado apenas como metadado e apresentado/baixado com tratamento que impeça uso como caminho ou injeção de cabeçalho. |
 | RNF-09 | Os arquivos devem ser limitados pelo valor de `MAX_FILE_SIZE_BYTES`; arquivos vazios e requisições sem arquivo são inválidos. Não há lista de extensões/MIME permitidos neste MVP. |
-| RNF-10 | O frontend deve chamar o backend pelo prefixo `/api`, conforme o proxy do Vite; o backend mantém os caminhos de API definidos nesta especificação sem o prefixo. |
+| RNF-10 | O frontend deve chamar o backend pelo prefixo `/api` por padrão, conforme o proxy de desenvolvimento do Vite; `VITE_API_BASE_URL` pode configurar a origem/prefixo em outros ambientes. O backend mantém os caminhos de API definidos nesta especificação sem o prefixo. |
 
 ## 5. Modelo de dados
 
@@ -142,7 +142,7 @@ Se uma falha ocorrer depois de Multer gravar o arquivo e antes de registrar os m
 - `controllers` validam/extraem dados HTTP e traduzem resultados/erros em respostas; não contêm regras de negócio.
 - `services` coordenam upload, associação ao usuário e regras de listagem/download sem depender de Express ou Multer.
 - `repositories` mantêm os metadados em memória e fornecem as operações de acesso necessárias. O filesystem permanece estritamente local em `backend/storage`.
-- O frontend usa componentes funcionais React; a comunicação ocorre por `fetch` através de `/api` e do proxy Vite.
+- O frontend usa componentes funcionais React; a comunicação ocorre por `fetch` através de `/api` por padrão, configurável com `VITE_API_BASE_URL`. Em produção, a infraestrutura deve encaminhar esse endereço às rotas do backend.
 - O nome físico do arquivo é gerado pelo servidor, separado de `originalName`, para impedir que a entrada do cliente determine caminhos locais.
 - O MVP não implementa autenticação. O cabeçalho `X-User-Id` facilita a associação por usuário, mas não oferece segurança contra falsificação de identidade.
 

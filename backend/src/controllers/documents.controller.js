@@ -21,7 +21,12 @@ function requireUserId(req, res, next) {
 
 async function upload(req, res, next) {
   try {
-    const document = await documentsService.uploadDocument(req.file, req.owner);
+    const uploadedFile = req.file && {
+      originalName: req.file.originalname,
+      size: req.file.size,
+      storageName: req.file.filename,
+    };
+    const document = await documentsService.uploadDocument(uploadedFile, req.owner);
     return res.status(201).json(document);
   } catch (error) {
     return next(error);
