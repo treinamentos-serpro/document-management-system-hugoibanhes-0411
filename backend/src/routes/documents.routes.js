@@ -1,12 +1,11 @@
 const crypto = require('node:crypto');
 const fs = require('node:fs');
-const path = require('node:path');
 const express = require('express');
 const multer = require('multer');
 const documentsController = require('../controllers/documents.controller');
+const storageDirectory = require('../config/storage');
 
 const router = express.Router();
-const storageDirectory = path.resolve(__dirname, '../../storage');
 const configuredFileSizeLimit = Number(process.env.MAX_FILE_SIZE_BYTES);
 const fileSizeLimit = Number.isSafeInteger(configuredFileSizeLimit) && configuredFileSizeLimit > 0
   ? configuredFileSizeLimit
