@@ -1,5 +1,6 @@
 const { randomUUID } = require('node:crypto');
 const documentsRepository = require('../repositories/documents.repository');
+const fileStorageRepository = require('../repositories/file-storage.repository');
 
 function createServiceError(status, code, message) {
   const error = new Error(message);
@@ -18,7 +19,7 @@ async function uploadDocument(file, owner) {
   }
 
   if (file.size === 0) {
-    await documentsRepository.removeFile(file.filename);
+    await fileStorageRepository.removeFile(file.filename);
     throw createServiceError(400, 'VALIDATION_ERROR', 'O arquivo não pode estar vazio.');
   }
 
@@ -34,7 +35,7 @@ async function uploadDocument(file, owner) {
   try {
     documentsRepository.create(document);
   } catch (error) {
-    await documentsRepository.removeFile(file.filename).catch(() => {});
+    await fileStorageRepository.removeFile(file.filename).catch(() => {});
     throw error;
   }
 
@@ -60,7 +61,7 @@ function getDocumentDownload(id, owner) {
 
   return {
     document: toPublicDocument(document),
-    stream: documentsRepository.createReadStream(document.storageName),
+    stream: fileStorageRepository.createReadStream(document.storageName),
   };
 }
 
